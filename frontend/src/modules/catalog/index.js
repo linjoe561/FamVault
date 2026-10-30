@@ -28,5 +28,6 @@ export default {
       meta: { requiresAdmin: true, title: '分類、位置與單位', navGroup: 'items' },
     },
   ],
-  nav: [{ to: { name: 'items' }, label: '品項', icon: 'box', order: 20 }],
+  // 手機底部分頁列只放 5 項，品項的入口在手機上改放在「我的」頁面
+  nav: [{ to: { name: 'items' }, label: '品項', icon: 'box', order: 20, mobile: false }],
 }

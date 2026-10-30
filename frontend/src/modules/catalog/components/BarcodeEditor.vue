@@ -2,10 +2,9 @@
 import { ref, useId } from 'vue'
 import AppIcon from '@/shared/components/AppIcon.vue'
 import BaseButton from '@/shared/components/BaseButton.vue'
+import ScanDialog from '@/shared/components/ScanDialog.vue'
 
-/**
- * 條碼清單編輯。目前用手動輸入；第四階段會在這裡加上「用鏡頭掃描」按鈕。
- */
+/** 條碼清單編輯：手動輸入，或用鏡頭掃描加入。 */
 defineProps({
   error: { type: String, default: '' },
 })
@@ -14,6 +13,12 @@ const codes = defineModel({ type: Array, default: () => [] })
 const id = useId()
 const draft = ref('')
 const localError = ref('')
+const scanOpen = ref(false)
+
+function onScanned(code) {
+  draft.value = code
+  add()
+}
 
 function add() {
   const code = draft.value.trim().toUpperCase()
@@ -59,10 +64,15 @@ function remove(code) {
         @keydown.enter.prevent="add"
       />
       <BaseButton variant="secondary" @click="add">加入</BaseButton>
+      <BaseButton variant="secondary" aria-label="用鏡頭掃條碼" @click="scanOpen = true">
+        <AppIcon name="scan" :size="18" />
+        掃描
+      </BaseButton>
     </div>
     <p class="barcodes__message" :class="{ 'barcodes__message--error': localError || error }">
       {{ localError || error || '同一個品項可以有多組條碼（例如不同包裝）' }}
     </p>
+    <ScanDialog v-model:open="scanOpen" title="掃描商品條碼" @detected="onScanned" />
   </div>
 </template>
 

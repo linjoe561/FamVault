@@ -7,6 +7,7 @@ import BaseSelect from '@/shared/components/BaseSelect.vue'
 import ExpiryBadge from '@/shared/components/ExpiryBadge.vue'
 import FormAlert from '@/shared/components/FormAlert.vue'
 import PageHeader from '@/shared/components/PageHeader.vue'
+import ScanDialog from '@/shared/components/ScanDialog.vue'
 import { formatQuantity } from '@/shared/utils/format'
 import { useCatalogStore } from '@/modules/catalog/store'
 import { stockApi } from '../api'
@@ -26,6 +27,7 @@ const route = useRoute()
 // 從首頁捷徑過來時會帶 ?status=expiring
 const initialStatus = statuses.some((s) => s.value === route.query.status) ? route.query.status : 'all'
 const filters = reactive({ search: '', status: initialStatus, categoryId: null })
+const scanOpen = ref(false)
 const rows = ref([])
 const total = ref(0)
 const page = ref(1)
@@ -96,7 +98,11 @@ onMounted(() => {
       <AppIcon name="search" :size="20" />
       <span class="visually-hidden">搜尋</span>
       <input v-model="filters.search" type="search" placeholder="家裡還有沒有…（名稱或條碼）" enterkeyhint="search" />
+      <button type="button" class="search__scan" aria-label="用鏡頭掃條碼查詢" @click="scanOpen = true">
+        <AppIcon name="scan" :size="20" />
+      </button>
     </label>
+    <ScanDialog v-model:open="scanOpen" @detected="(code) => (filters.search = code)" />
 
     <div class="chips" role="radiogroup" aria-label="狀態">
       <button
@@ -194,6 +200,23 @@ onMounted(() => {
   font-size: var(--font-size-md);
   color: var(--color-text);
   outline: none;
+}
+
+.search__scan {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-right: calc(-1 * var(--space-2));
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.search__scan:hover {
+  background: var(--color-primary-soft);
 }
 
 .chips {

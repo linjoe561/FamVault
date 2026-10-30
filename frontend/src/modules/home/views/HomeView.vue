@@ -14,6 +14,7 @@ const greeting = computed(() => {
 
 // 第五階段會換成到期提醒、需要補貨等儀表板資訊
 const shortcuts = [
+  { to: { name: 'scan' }, icon: 'scan', title: '掃條碼', text: '拿起東西掃一下，馬上登錄或記錄用掉' },
   { to: { name: 'stock' }, icon: 'jar', title: '家裡還有沒有', text: '查數量、放哪裡、什麼時候到期' },
   { to: { name: 'stock', query: { status: 'expiring' } }, icon: 'history', title: '快過期的東西', text: '已過期和 7 天內到期的，先到期的先用' },
   { to: { name: 'purchase-new' }, icon: 'cart', title: '買東西回來了', text: '登錄一下，庫存自動增加' },

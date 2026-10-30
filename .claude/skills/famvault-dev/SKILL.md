@@ -120,7 +120,9 @@ export default {
 
 然後在 `frontend/src/app/modules.js` 匯入並加入 `modules` 陣列。導覽列會自動出現。
 
-- **導覽列最多 5 項**（首頁、庫存、購買、品項、我的）。管理功能不要加進導覽，入口放在「我的」頁面（`AccountView` 的管理連結區）。
+- **手機底部分頁列固定 5 項**：首頁、庫存、掃描（`featured: true`，中間凸出的大按鈕）、購買、我的。其他導覽項目要加 `mobile: false`（只在桌機側邊選單出現），並在「我的」頁面（`AccountView`）加入口；管理功能放在管理連結區。
+- **條碼掃描**：用 `shared/components/BarcodeScanner.vue`（整頁）或 `ScanDialog.vue`（表單中掃描填入）。不要直接呼叫 `getUserMedia` 或 ZXing。鏡頭只在 HTTPS 或 localhost 可用；內建瀏覽器沒有鏡頭，用掃描器下方的手動輸入測試流程。
+- 頁面之間用 query 傳遞掃描結果：`/items/new?barcode=…&next=purchase`、`/purchases/new?itemId=…`、`/stock?status=expiring`。
 - 模組之間可以 import 對方的 `api.js` 與 `store.js`，不要 import 對方的 views 或 components。
 - 日期、數量、金額的顯示用 `shared/utils/format.js`（`formatQuantity`、`formatDate`、`describeExpiry`…）；保存期限標籤用 `shared/components/ExpiryBadge.vue`。
 

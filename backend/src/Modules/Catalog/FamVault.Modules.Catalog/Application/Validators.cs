@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace FamVault.Modules.Catalog.Application;
 
-internal static class CatalogRules
+internal static partial class CatalogRules
 {
     public const int BarcodeMaxLength = 50;
     public const int MaxBarcodesPerItem = 10;
@@ -11,6 +11,20 @@ internal static class CatalogRules
     public static IRuleBuilderOptions<T, string> ValidName<T>(this IRuleBuilder<T, string> rule, int maxLength) =>
         rule.Must(name => !string.IsNullOrWhiteSpace(name)).WithMessage("請輸入名稱")
             .MaximumLength(maxLength).WithMessage($"名稱最多 {maxLength} 個字");
+
+    /// <summary>
+    /// 掃描或貼上的條碼常帶前後空白，存檔時會去掉，所以檢查時也先去掉。
+    /// 空白只回報一次「不能是空白」，其他檢查遇到空白時略過。
+    /// </summary>
+    public static IRuleBuilderOptions<T, string> ValidBarcode<T>(this IRuleBuilder<T, string> rule) =>
+        rule.Must(code => !string.IsNullOrWhiteSpace(code)).WithMessage("條碼不能是空白")
+            .Must(code => string.IsNullOrWhiteSpace(code) || code.Trim().Length <= BarcodeMaxLength)
+            .WithMessage($"條碼最多 {BarcodeMaxLength} 個字元")
+            .Must(code => string.IsNullOrWhiteSpace(code) || BarcodePattern().IsMatch(code.Trim()))
+            .WithMessage("條碼只能包含英文字母、數字與 -");
+
+    [GeneratedRegex("^[0-9A-Za-z-]+$")]
+    private static partial Regex BarcodePattern();
 }
 
 internal sealed class SaveCategoryRequestValidator : AbstractValidator<SaveCategoryRequest>
@@ -38,7 +52,7 @@ internal sealed class SaveUnitRequestValidator : AbstractValidator<SaveUnitReque
     }
 }
 
-internal sealed partial class SaveItemRequestValidator : AbstractValidator<SaveItemRequest>
+internal sealed class SaveItemRequestValidator : AbstractValidator<SaveItemRequest>
 {
     public SaveItemRequestValidator()
     {
@@ -52,17 +66,16 @@ internal sealed partial class SaveItemRequestValidator : AbstractValidator<SaveI
         RuleFor(x => x.Barcodes)
             .Must(codes => codes is null || codes.Count <= CatalogRules.MaxBarcodesPerItem)
             .WithMessage($"每個品項最多 {CatalogRules.MaxBarcodesPerItem} 組條碼");
-        // 掃描或貼上的條碼常帶前後空白，存檔時會去掉，所以檢查時也先去掉
-        RuleForEach(x => x.Barcodes)
-            .Cascade(CascadeMode.Stop)
-            .Must(code => !string.IsNullOrWhiteSpace(code)).WithMessage("條碼不能是空白")
-            .Must(code => code.Trim().Length <= CatalogRules.BarcodeMaxLength)
-            .WithMessage($"條碼最多 {CatalogRules.BarcodeMaxLength} 個字元")
-            .Must(code => BarcodePattern().IsMatch(code.Trim())).WithMessage("條碼只能包含英文字母、數字與 -");
+        RuleForEach(x => x.Barcodes).ValidBarcode();
     }
+}
 
-    [GeneratedRegex("^[0-9A-Za-z-]+$")]
-    private static partial Regex BarcodePattern();
+internal sealed class AddBarcodeRequestValidator : AbstractValidator<AddBarcodeRequest>
+{
+    public AddBarcodeRequestValidator()
+    {
+        RuleFor(x => x.Code).ValidBarcode();
+    }
 }
 
 internal sealed class ItemQueryValidator : AbstractValidator<ItemQuery>

@@ -1,14 +1,16 @@
 <script setup>
 import { nextTick, ref, useId, watch } from 'vue'
 import AppIcon from '@/shared/components/AppIcon.vue'
+import ScanDialog from '@/shared/components/ScanDialog.vue'
 import { itemsApi } from '@/modules/catalog/api'
 
 /**
- * 選品項：輸入名稱或條碼即時搜尋。選好後顯示品項名稱，可以再換。
+ * 選品項：輸入名稱或條碼即時搜尋，或按掃描鍵用鏡頭掃條碼。選好後顯示品項名稱，可以再換。
  * v-model 是完整的品項物件（含 unitName、shelfLifeDays、locationId）。
  */
 defineProps({
   error: { type: String, default: '' },
+  allowScan: { type: Boolean, default: true },
 })
 const item = defineModel({ type: Object, default: null })
 
@@ -18,6 +20,17 @@ const results = ref([])
 const open = ref(false)
 const searching = ref(false)
 const input = ref(null)
+const scanOpen = ref(false)
+const scanError = ref('')
+
+async function onScanned(code) {
+  scanError.value = ''
+  try {
+    select(await itemsApi.getByBarcode(code))
+  } catch (e) {
+    scanError.value = e.status === 404 ? `條碼 ${code} 還沒登錄，請先到「品項」新增，或用「掃描」頁處理` : e.message
+  }
+}
 
 let timer
 let requestId = 0
@@ -90,6 +103,15 @@ function close() {
           @blur="close"
           @keydown.enter.prevent="selectFirst"
         />
+        <button
+          v-if="allowScan"
+          type="button"
+          class="picker__scan"
+          aria-label="用鏡頭掃條碼"
+          @click="scanOpen = true"
+        >
+          <AppIcon name="scan" :size="20" />
+        </button>
       </div>
       <ul v-if="open && text.trim()" :id="`${id}-list`" class="picker__list card" role="listbox">
         <li v-for="result in results" :key="result.id" role="option" :aria-selected="false">
@@ -105,7 +127,8 @@ function close() {
         </li>
       </ul>
     </div>
-    <p v-if="error" class="picker__error">{{ error }}</p>
+    <p v-if="scanError || error" class="picker__error">{{ scanError || error }}</p>
+    <ScanDialog v-if="allowScan" v-model:open="scanOpen" title="掃描品項條碼" @detected="onScanned" />
   </div>
 </template>
 
@@ -183,6 +206,23 @@ function close() {
   font-size: var(--font-size-md);
   color: var(--color-text);
   outline: none;
+}
+
+.picker__scan {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-right: calc(-1 * var(--space-2));
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.picker__scan:hover {
+  background: var(--color-primary-soft);
 }
 
 .picker__list {

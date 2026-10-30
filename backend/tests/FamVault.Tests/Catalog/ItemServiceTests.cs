@@ -62,6 +62,24 @@ public class ItemServiceTests
     }
 
     [Fact]
+    public async Task AddBarcode_attaches_new_code_is_idempotent_and_rejects_codes_of_other_items()
+    {
+        await using var db = CatalogTestDb.Create();
+        var service = new ItemService(db, []);
+        var milk = await service.CreateAsync(Milk("111"), CancellationToken.None);
+        await service.CreateAsync(Milk("999") with { Name = "豆漿" }, CancellationToken.None);
+
+        var updated = await service.AddBarcodeAsync(milk.Id, new AddBarcodeRequest(" 222 "), CancellationToken.None);
+        var again = await service.AddBarcodeAsync(milk.Id, new AddBarcodeRequest("222"), CancellationToken.None);
+
+        Assert.Equal(["111", "222"], updated.Barcodes);
+        Assert.Equal(["111", "222"], again.Barcodes);
+        var error = await Assert.ThrowsAsync<ConflictException>(() =>
+            service.AddBarcodeAsync(milk.Id, new AddBarcodeRequest("999"), CancellationToken.None));
+        Assert.Contains("豆漿", error.Message);
+    }
+
+    [Fact]
     public async Task List_hides_archived_items_and_filters_by_parent_category()
     {
         await using var db = CatalogTestDb.Create();

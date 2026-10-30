@@ -59,6 +59,19 @@ async function logout() {
     </div>
   </section>
 
+  <nav class="card links" aria-label="更多功能">
+    <RouterLink :to="{ name: 'items' }" class="links__item">
+      <AppIcon name="box" :size="20" />
+      品項
+      <AppIcon name="chevron" :size="18" class="links__chevron" />
+    </RouterLink>
+    <RouterLink :to="{ name: 'purchases' }" class="links__item">
+      <AppIcon name="history" :size="20" />
+      購買紀錄
+      <AppIcon name="chevron" :size="18" class="links__chevron" />
+    </RouterLink>
+  </nav>
+
   <nav v-if="auth.isAdmin" class="card links" aria-label="管理">
     <RouterLink :to="{ name: 'members' }" class="links__item">
       <AppIcon name="users" :size="20" />

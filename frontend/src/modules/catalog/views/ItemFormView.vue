@@ -97,10 +97,16 @@ async function save() {
   try {
     if (isEdit.value) {
       await itemsApi.update(props.id, payload)
+      router.push({ name: 'items' })
     } else {
-      await itemsApi.create(payload)
+      const created = await itemsApi.create(payload)
+      // 從掃描頁「新增品項，接著登錄購買」過來時，存檔後直接帶到購買登錄
+      router.push(
+        route.query.next === 'purchase'
+          ? { name: 'purchase-new', query: { itemId: created.id } }
+          : { name: 'items' },
+      )
     }
-    router.push({ name: 'items' })
   } catch (e) {
     error.value = e.message
     fieldErrors.value = e.fieldErrors ?? {}

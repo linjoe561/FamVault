@@ -1,0 +1,20 @@
+{
+  "name": "FamVault 家中庫存",
+  "short_name": "FamVault",
+  "description": "記錄家裡的東西、數量與保存期限",
+  "lang": "zh-Hant-TW",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F3EC",
+  "theme_color": "#F7F3EC",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "掃描條碼", "url": "/scan" },
+    { "name": "購買登錄", "url": "/purchases/new" },
+    { "name": "庫存", "url": "/stock" }
+  ]
+}

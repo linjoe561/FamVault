@@ -5,6 +5,7 @@ import BaseButton from '@/shared/components/BaseButton.vue'
 import BaseSelect from '@/shared/components/BaseSelect.vue'
 import FormAlert from '@/shared/components/FormAlert.vue'
 import PageHeader from '@/shared/components/PageHeader.vue'
+import ScanDialog from '@/shared/components/ScanDialog.vue'
 import { useAuthStore } from '@/modules/auth/store'
 import { itemsApi } from '../api'
 import { useCatalogStore } from '../store'
@@ -15,6 +16,7 @@ const auth = useAuthStore()
 const catalog = useCatalogStore()
 
 const filters = reactive({ search: '', categoryId: null, includeArchived: false })
+const scanOpen = ref(false)
 const items = ref([])
 const total = ref(0)
 const page = ref(1)
@@ -87,7 +89,11 @@ onMounted(() => {
       <AppIcon name="search" :size="20" />
       <span class="visually-hidden">搜尋品項</span>
       <input v-model="filters.search" type="search" placeholder="搜尋名稱或條碼" enterkeyhint="search" />
+      <button type="button" class="search__scan" aria-label="用鏡頭掃條碼搜尋" @click="scanOpen = true">
+        <AppIcon name="scan" :size="20" />
+      </button>
     </label>
+    <ScanDialog v-model:open="scanOpen" @detected="(code) => (filters.search = code)" />
     <div class="filters__row">
       <div class="filters__category">
         <BaseSelect v-model="filters.categoryId" label="分類" placeholder="全部分類">
@@ -173,6 +179,23 @@ onMounted(() => {
   font-size: var(--font-size-md);
   color: var(--color-text);
   outline: none;
+}
+
+.search__scan {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-right: calc(-1 * var(--space-2));
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.search__scan:hover {
+  background: var(--color-primary-soft);
 }
 
 .filters__row {

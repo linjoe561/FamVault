@@ -34,6 +34,11 @@ public sealed class ItemsController(ItemService itemService) : ControllerBase
     public Task<ItemDto> Update(int id, SaveItemRequest request, CancellationToken cancellationToken) =>
         itemService.UpdateAsync(id, request, cancellationToken);
 
+    /// <summary>把一組條碼加到現有品項（掃到沒登錄過的條碼時使用）。</summary>
+    [HttpPost("{id:int}/barcodes")]
+    public Task<ItemDto> AddBarcode(int id, AddBarcodeRequest request, CancellationToken cancellationToken) =>
+        itemService.AddBarcodeAsync(id, request, cancellationToken);
+
     [Authorize(Roles = AppRoles.Admin)]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)

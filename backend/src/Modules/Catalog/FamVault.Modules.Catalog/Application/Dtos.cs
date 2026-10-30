@@ -38,6 +38,8 @@ public sealed record SaveItemRequest(
     IReadOnlyList<string>? Barcodes,
     bool IsArchived);
 
+public sealed record AddBarcodeRequest(string Code);
+
 /// <summary>品項清單的查詢條件。Search 會比對名稱（部分符合）與條碼（完全符合）。</summary>
 public sealed record ItemQuery
 {

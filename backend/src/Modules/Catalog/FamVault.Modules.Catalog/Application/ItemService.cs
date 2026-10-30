@@ -74,7 +74,44 @@ public sealed class ItemService(CatalogModuleDbContext db, IEnumerable<ICatalogR
         await db.SaveChangesAsync(cancellationToken);
     }
 
+    /// <summary>
+    /// 掃到沒登錄過的條碼時，綁定到現有品項（例如同一樣東西換了包裝）。已經綁定過就直接回傳。
+    /// </summary>
+    public async Task<ItemDto> AddBarcodeAsync(int id, AddBarcodeRequest request, CancellationToken cancellationToken)
+    {
+        var item = await db.Items.Include(i => i.Barcodes).SingleOrDefaultAsync(i => i.Id == id, cancellationToken)
+            ?? throw new NotFoundException("找不到這個品項");
+        var code = NormalizeBarcode(request.Code);
+
+        if (item.Barcodes.All(b => b.Code != code))
+        {
+            if (item.Barcodes.Count >= CatalogRules.MaxBarcodesPerItem)
+            {
+                throw new BusinessRuleException($"「{item.Name}」已經有 {CatalogRules.MaxBarcodesPerItem} 組條碼，請先移除不用的");
+            }
+
+            await EnsureBarcodesAvailableAsync([code], item.Id, cancellationToken);
+            item.Barcodes.Add(new ItemBarcode { Code = code });
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        return await GetAsync(id, cancellationToken);
+    }
+
     internal static string NormalizeBarcode(string code) => code.Trim().ToUpperInvariant();
+
+    private async Task EnsureBarcodesAvailableAsync(
+        IReadOnlyCollection<string> codes, int itemId, CancellationToken cancellationToken)
+    {
+        var usedBy = await db.ItemBarcodes
+            .Where(b => codes.Contains(b.Code) && b.ItemId != itemId)
+            .Join(db.Items, b => b.ItemId, i => i.Id, (b, i) => new { b.Code, i.Name })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (usedBy is not null)
+        {
+            throw new ConflictException($"條碼 {usedBy.Code} 已經屬於「{usedBy.Name}」");
+        }
+    }
 
     private async Task ApplyAsync(Item item, SaveItemRequest request, CancellationToken cancellationToken)
     {
@@ -100,14 +137,7 @@ public sealed class ItemService(CatalogModuleDbContext db, IEnumerable<ICatalogR
         }
 
         var codes = (request.Barcodes ?? []).Select(NormalizeBarcode).Where(c => c.Length > 0).Distinct().ToList();
-        var usedBy = await db.ItemBarcodes
-            .Where(b => codes.Contains(b.Code) && b.ItemId != item.Id)
-            .Join(db.Items, b => b.ItemId, i => i.Id, (b, i) => new { b.Code, i.Name })
-            .FirstOrDefaultAsync(cancellationToken);
-        if (usedBy is not null)
-        {
-            throw new ConflictException($"條碼 {usedBy.Code} 已經屬於「{usedBy.Name}」");
-        }
+        await EnsureBarcodesAvailableAsync(codes, item.Id, cancellationToken);
 
         item.Name = name;
         item.CategoryId = request.CategoryId;

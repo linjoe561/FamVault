@@ -16,6 +16,12 @@ export default {
       meta: { title: '庫存明細', navGroup: 'stock' },
     },
     {
+      path: '/scan',
+      name: 'scan',
+      component: () => import('./views/ScanView.vue'),
+      meta: { title: '掃描' },
+    },
+    {
       path: '/purchases/new',
       name: 'purchase-new',
       component: () => import('./views/PurchaseFormView.vue'),
@@ -30,6 +36,8 @@ export default {
   ],
   nav: [
     { to: { name: 'stock' }, label: '庫存', icon: 'jar', order: 10 },
+    // featured：手機底部分頁列正中央的大按鈕
+    { to: { name: 'scan' }, label: '掃描', icon: 'scan', order: 12, featured: true },
     { to: { name: 'purchase-new' }, label: '購買', icon: 'cart', order: 15 },
   ],
 }

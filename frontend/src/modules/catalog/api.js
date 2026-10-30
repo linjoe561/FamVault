@@ -20,5 +20,6 @@ export const itemsApi = {
   getByBarcode: (code) => http.get(`/items/by-barcode/${encodeURIComponent(code)}`).then((r) => r.data),
   create: (form) => http.post('/items', form).then((r) => r.data),
   update: (id, form) => http.put(`/items/${id}`, form).then((r) => r.data),
+  addBarcode: (id, code) => http.post(`/items/${id}/barcodes`, { code }).then((r) => r.data),
   remove: (id) => http.delete(`/items/${id}`),
 }

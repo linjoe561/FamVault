@@ -8,6 +8,8 @@ import { navItems } from '../modules'
 const auth = useAuthStore()
 const route = useRoute()
 const items = computed(() => navItems.filter((item) => !item.adminOnly || auth.isAdmin))
+// mobile: false 的項目只出現在桌機側邊選單
+const tabItems = computed(() => items.value.filter((item) => item.mobile !== false))
 
 // 子頁面（例如 /items/5）用 meta.navGroup 指定要亮起哪個選單項目
 const isActive = (item) => route.name === item.to.name || route.meta.navGroup === item.to.name
@@ -46,14 +48,15 @@ const isActive = (item) => route.name === item.to.name || route.meta.navGroup ==
     <!-- 手機：底部分頁列 -->
     <nav class="tabbar" aria-label="主選單">
       <RouterLink
-        v-for="item in items"
+        v-for="item in tabItems"
         :key="item.label"
         :to="item.to"
         class="tabbar__link"
-        :class="{ 'is-active': isActive(item) }"
+        :class="{ 'is-active': isActive(item), 'tabbar__link--featured': item.featured }"
         :aria-current="isActive(item) ? 'page' : undefined"
       >
-        <AppIcon :name="item.icon" />
+        <span v-if="item.featured" class="tabbar__bubble"><AppIcon :name="item.icon" :size="26" /></span>
+        <AppIcon v-else :name="item.icon" />
         <span>{{ item.label }}</span>
       </RouterLink>
     </nav>
@@ -104,6 +107,29 @@ const isActive = (item) => route.name === item.to.name || route.meta.navGroup ==
 .tabbar__link.is-active {
   color: var(--color-primary);
   font-weight: 500;
+}
+
+/* 中間的掃描鍵：凸出的圓形按鈕，單手拇指最容易按到 */
+.tabbar__link--featured {
+  justify-content: flex-end;
+  padding-bottom: 6px;
+}
+
+.tabbar__bubble {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-top: -24px;
+  border: 4px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  box-shadow: var(--shadow-card);
+}
+
+.tabbar__link--featured.is-active .tabbar__bubble {
+  background: var(--color-primary-hover);
 }
 
 @media (min-width: 900px) {
