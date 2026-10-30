@@ -13,6 +13,16 @@ public sealed class ValidationActionFilter(IServiceProvider services) : IAsyncAc
 {
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
+        // 不直接寫進 ModelState：它的 key 不分大小寫，會沿用模型繫結時的 "Page" 而不是 "page"。
+        var errors = new Dictionary<string, List<string>>();
+        foreach (var (key, entry) in context.ModelState)
+        {
+            foreach (var error in entry.Errors)
+            {
+                AddError(errors, key, error.ErrorMessage);
+            }
+        }
+
         foreach (var argument in context.ActionArguments.Values)
         {
             if (argument is null)
@@ -30,18 +40,32 @@ public sealed class ValidationActionFilter(IServiceProvider services) : IAsyncAc
                 new ValidationContext<object>(argument), context.HttpContext.RequestAborted);
             foreach (var error in result.Errors)
             {
-                context.ModelState.AddModelError(
-                    JsonNamingPolicy.CamelCase.ConvertName(error.PropertyName), error.ErrorMessage);
+                AddError(errors, error.PropertyName, error.ErrorMessage);
             }
         }
 
-        if (!context.ModelState.IsValid)
+        if (errors.Count > 0)
         {
             context.Result = new BadRequestObjectResult(
-                new ValidationProblemDetails(context.ModelState) { Title = "輸入資料有誤", Status = 400 });
+                new ValidationProblemDetails(errors.ToDictionary(e => e.Key, e => e.Value.ToArray()))
+                {
+                    Title = "輸入資料有誤",
+                    Status = 400,
+                });
             return;
         }
 
         await next();
+    }
+
+    private static void AddError(Dictionary<string, List<string>> errors, string propertyName, string message)
+    {
+        var key = JsonNamingPolicy.CamelCase.ConvertName(propertyName);
+        if (!errors.TryGetValue(key, out var messages))
+        {
+            errors[key] = messages = [];
+        }
+
+        messages.Add(message);
     }
 }

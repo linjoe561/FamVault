@@ -1,3 +1,4 @@
+using FamVault.Modules.Catalog;
 using FamVault.Modules.Identity;
 using FamVault.SharedKernel;
 using FamVault.SharedKernel.Modules;
@@ -13,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 IModule[] modules =
 [
     new IdentityModule(),
+    new CatalogModule(),
 ];
 
 builder.Services.AddSharedKernel();

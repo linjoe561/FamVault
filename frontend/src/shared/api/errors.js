@@ -23,8 +23,10 @@ export function toApiError(error) {
 
   const { status, data } = error.response
   const fieldErrors = {}
-  for (const [field, messages] of Object.entries(data?.errors ?? {})) {
-    fieldErrors[field] = Array.isArray(messages) ? messages[0] : String(messages)
+  for (const [key, messages] of Object.entries(data?.errors ?? {})) {
+    // 清單欄位的錯誤（例如 barcodes[1]）歸到清單本身，表單只需要對應一個欄位
+    const field = key.replace(/\[\d+\]$/, '')
+    fieldErrors[field] ??= Array.isArray(messages) ? messages[0] : String(messages)
   }
 
   const message = data?.detail || data?.title || defaultMessage(status)

@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\FamVault.SharedKernel\FamVault.SharedKernel.csproj" />
     <ProjectReference Include="..\..\src\Modules\Identity\FamVault.Modules.Identity\FamVault.Modules.Identity.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Catalog\FamVault.Modules.Catalog\FamVault.Modules.Catalog.csproj" />
   </ItemGroup>
 
 </Project>

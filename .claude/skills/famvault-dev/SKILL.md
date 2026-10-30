@@ -23,8 +23,8 @@ description: FamVault 家庭庫存系統的開發規範與操作手冊。在這�
 1. **模組化單體**：每個功能是一個模組，後端 `backend/src/Modules/<名稱>/`，前端 `frontend/src/modules/<名稱>/`。
 2. **模組之間不直接參照**：後端模組只能參照 `FamVault.SharedKernel`。需要別的模組的資料時，在 `SharedKernel/Contracts/` 定義介面，由擁有資料的模組實作（範例：`IUserDirectory`）。
 3. **每個模組有自己的 DbContext 與 schema**：用 `services.AddModuleDbContext<T>(configuration, schema)` 註冊。跨模組只存 Id，不建立跨 schema 外鍵。
-4. **schema 名稱避開 T-SQL 保留字**（例如 `identity`、`user`、`order`）。現有：`auth`。
-5. **預設所有 API 都要登入**（FallbackPolicy）。公開端點必須明確標 `[AllowAnonymous]`；管理功能標 `[Authorize(Roles = RoleNames.Admin)]`。
+4. **schema 名稱避開 T-SQL 保留字**（例如 `identity`、`user`、`order`）。現有：`auth`（Identity）、`catalog`（Catalog）。
+5. **預設所有 API 都要登入**（FallbackPolicy）。公開端點必須明確標 `[AllowAnonymous]`；管理功能標 `[Authorize(Roles = AppRoles.Admin)]`（`AppRoles` 在 SharedKernel，模組不要參照 Identity 的 `RoleNames`）。
 6. **UI 不寫死色碼、字體、圓角、間距**：一律用 `frontend/src/design/tokens.css` 的 CSS 變數。視覺定位是溫暖的家用質感，**避免 SaaS 風格的藍紫漸層**。正式視覺之後由 Claude Design 提供，屆時主要替換 tokens。
 7. **手機優先**：觸控目標至少 `var(--touch-target)`（44px），輸入框字級至少 16px，版面在 375px 寬度要能用。
 
@@ -70,6 +70,10 @@ DbContext 的 `OnModelCreating` 要呼叫 `builder.HasDefaultSchema(Schema)`。
 - **時間**：注入 `TimeProvider`，不要直接用 `DateTime.Now`。稽核時間用 `DateTimeOffset`；保存期限這類日期用 `DateOnly`。
 - **主鍵**：業務資料用 `int`（`AuditableEntity.Id`）；使用者是 `Guid`。新 Guid 用 `Guid.CreateVersion7()`。
 - **DTO** 用 `sealed record`。JSON 欄位自動轉 camelCase。
+- **清單查詢**：查詢條件寫成 `record XxxQuery`（`[FromQuery]` 綁定，也會被驗證器檢查），回傳 `SharedKernel.Web.PagedResult<T>`。範例：`ItemsController.List`。
+- **刪除前檢查使用中**：被其他資料參照時丟 `ConflictException`，訊息說明有幾筆在用、該怎麼處理（範例：`CategoryService.DeleteAsync`）。
+- **種子資料**：用 `HasData`，所有值（含 `CreatedAt`）必須是常數，否則每次都會產生新的 Migration（範例：`CatalogSeedData`）。
+- **完整模組範例**：`Modules/Catalog`（多個 Service、查詢分頁、種子資料、跨表檢查）。
 
 ## Migration
 
@@ -108,10 +112,12 @@ export default {
 
 然後在 `frontend/src/app/modules.js` 匯入並加入 `modules` 陣列。導覽列會自動出現。
 
-- 路由 meta：`public`（不需登入）、`requiresAdmin`、`layout: 'blank'`（不顯示導覽）、`title`。
+- 路由 meta：`public`（不需登入）、`requiresAdmin`、`layout: 'blank'`（不顯示導覽）、`title`、`navGroup`（子頁面要亮起哪個導覽項目，填該項目的路由名稱）。
 - 導覽圖示在 `shared/components/AppIcon.vue` 的 `paths` 新增。
 - 錯誤處理：API 失敗時拋出 `ApiError`，有 `message`（整體提示）與 `fieldErrors`（`{ 欄位: 訊息 }`）。表單用 `FormAlert` 顯示 message，`TextField` 的 `error` 屬性顯示欄位錯誤。
-- 共用元件：`BaseButton`、`TextField`、`AppDialog`（手機上變成底部面板）、`PageHeader`、`FormAlert`、`AppIcon`。
+- 共用元件：`BaseButton`、`TextField`、`BaseSelect`（原生 select，`placeholder` 會加一個值為 null 的選項）、`AppDialog`（手機上變成底部面板）、`ConfirmDialog`（`onConfirm` 回傳 Promise，失敗訊息顯示在對話框內）、`PageHeader`、`FormAlert`、`AppIcon`。
+- 很少變動的參考資料（例如分類、單位）放在模組 store，載入一次共用；修改後 `load({ force: true })`（範例：`modules/catalog/store.js`）。
+- 長表單用獨立頁面（例如 `ItemFormView`），短表單用 `AppDialog`。
 
 ## 啟動與驗證
 
@@ -126,6 +132,16 @@ npm --prefix frontend run build                       # 前端建置檢查
 `.claude/launch.json` 已設定 `api` 與 `web` 兩個預覽伺服器。
 修改後至少執行 `dotnet build`／`dotnet test` 與 `npm run build`；牽涉畫面時用瀏覽器實際操作，並以手機寬度（375px）檢查。
 測試時建立的帳號或資料，測完要刪除。
+
+**本機的 `FamVault` 資料庫已經有使用者的真實帳號，不要拿來測試。** 整合測試或瀏覽器測試時，讓後端連到另一個資料庫：
+
+```bash
+ConnectionStrings__Default="Server=.;Database=FamVault_Test;Trusted_Connection=True;TrustServerCertificate=True" ASPNETCORE_ENVIRONMENT=Development dotnet run --project backend/src/FamVault.Api --no-launch-profile --urls http://localhost:5081
+```
+
+前端建立 `frontend/.env.development.local`（內容 `VITE_API_PROXY_TARGET=http://localhost:5081`），重新啟動 web 預覽。
+測完：刪除該檔案、停止 5081 的後端、`DROP DATABASE FamVault_Test`，再重新啟動 `api` 與 `web` 預覽。
+在瀏覽器登入測試帳號會蓋掉內建瀏覽器中使用者原本的登入狀態，結束時要告知使用者。
 
 ## 文件
 

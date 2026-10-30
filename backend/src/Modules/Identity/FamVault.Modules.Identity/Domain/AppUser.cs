@@ -1,3 +1,4 @@
+using FamVault.SharedKernel.Auth;
 using Microsoft.AspNetCore.Identity;
 
 namespace FamVault.Modules.Identity.Domain;
@@ -16,11 +17,8 @@ public sealed class AppRole : IdentityRole<Guid>
 
 public static class RoleNames
 {
-    /// <summary>可以管理家庭成員與主檔資料。</summary>
-    public const string Admin = "Admin";
-
-    /// <summary>一般成員：登錄購買、使用與查詢庫存。</summary>
-    public const string Member = "Member";
+    public const string Admin = AppRoles.Admin;
+    public const string Member = AppRoles.Member;
 
     public static readonly IReadOnlyList<string> All = [Admin, Member];
 }

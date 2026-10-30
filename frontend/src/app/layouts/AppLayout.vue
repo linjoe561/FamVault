@@ -1,11 +1,16 @@
 <script setup>
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import AppIcon from '@/shared/components/AppIcon.vue'
 import { useAuthStore } from '@/modules/auth/store'
 import { navItems } from '../modules'
 
 const auth = useAuthStore()
+const route = useRoute()
 const items = computed(() => navItems.filter((item) => !item.adminOnly || auth.isAdmin))
+
+// 子頁面（例如 /items/5）用 meta.navGroup 指定要亮起哪個選單項目
+const isActive = (item) => route.name === item.to.name || route.meta.navGroup === item.to.name
 </script>
 
 <template>
@@ -17,7 +22,14 @@ const items = computed(() => navItems.filter((item) => !item.adminOnly || auth.i
         FamVault
       </div>
       <nav aria-label="主選單">
-        <RouterLink v-for="item in items" :key="item.label" :to="item.to" class="sidebar__link">
+        <RouterLink
+          v-for="item in items"
+          :key="item.label"
+          :to="item.to"
+          class="sidebar__link"
+          :class="{ 'is-active': isActive(item) }"
+          :aria-current="isActive(item) ? 'page' : undefined"
+        >
           <AppIcon :name="item.icon" />
           {{ item.label }}
         </RouterLink>
@@ -33,7 +45,14 @@ const items = computed(() => navItems.filter((item) => !item.adminOnly || auth.i
 
     <!-- 手機：底部分頁列 -->
     <nav class="tabbar" aria-label="主選單">
-      <RouterLink v-for="item in items" :key="item.label" :to="item.to" class="tabbar__link">
+      <RouterLink
+        v-for="item in items"
+        :key="item.label"
+        :to="item.to"
+        class="tabbar__link"
+        :class="{ 'is-active': isActive(item) }"
+        :aria-current="isActive(item) ? 'page' : undefined"
+      >
         <AppIcon :name="item.icon" />
         <span>{{ item.label }}</span>
       </RouterLink>
@@ -82,7 +101,7 @@ const items = computed(() => navItems.filter((item) => !item.adminOnly || auth.i
   text-decoration: none;
 }
 
-.tabbar__link.router-link-exact-active {
+.tabbar__link.is-active {
   color: var(--color-primary);
   font-weight: 500;
 }
@@ -154,7 +173,7 @@ const items = computed(() => navItems.filter((item) => !item.adminOnly || auth.i
     background: var(--color-surface);
   }
 
-  .sidebar__link.router-link-exact-active {
+  .sidebar__link.is-active {
     background: var(--color-surface);
     color: var(--color-primary);
     font-weight: 500;

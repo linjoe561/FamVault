@@ -4,6 +4,9 @@
     <Project Path="src/FamVault.SharedKernel/FamVault.SharedKernel.csproj" />
   </Folder>
   <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Catalog/">
+    <Project Path="src/Modules/Catalog/FamVault.Modules.Catalog/FamVault.Modules.Catalog.csproj" />
+  </Folder>
   <Folder Name="/src/Modules/Identity/">
     <Project Path="src/Modules/Identity/FamVault.Modules.Identity/FamVault.Modules.Identity.csproj" />
   </Folder>
