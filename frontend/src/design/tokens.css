@@ -1,0 +1,70 @@
+/*
+ * 設計 tokens：整個前端的顏色、字體、圓角、間距都從這裡取用。
+ * 元件內不要寫死色碼。之後套用 Claude Design 的視覺時，主要改這個檔案。
+ *
+ * 風格定位：溫暖、有生活感的家用質感（米白紙感、深咖啡文字、鼠尾草綠、陶土橘、芥末黃），
+ * 避免冷色系 SaaS 的藍紫漸層。目前數值是暫定值。
+ */
+:root {
+  /* 底色與表面 */
+  --color-bg: #f7f3ec;
+  --color-surface: #fffdf9;
+  --color-surface-muted: #efe8dc;
+  --color-border: #e3d9ca;
+  --color-border-strong: #cbbda9;
+
+  /* 文字 */
+  --color-text: #3b3229;
+  --color-text-muted: #736759;
+  --color-text-inverse: #fffdf9;
+
+  /* 主色（鼠尾草綠）與點綴色（陶土橘） */
+  --color-primary: #5b7a5e;
+  --color-primary-hover: #4d6a50;
+  --color-primary-soft: #e3ebdf;
+  --color-accent: #c0714f;
+  --color-accent-soft: #f5e3d8;
+
+  /* 狀態色：保存期限與訊息。同色系但降低飽和度，搭配圖示與文字，不只靠顏色辨識 */
+  --color-danger: #a94e38;
+  --color-danger-soft: #f6e0d9;
+  --color-warning: #b7792a;
+  --color-warning-soft: #f7ead6;
+  --color-notice: #9c8433;
+  --color-notice-soft: #f3edd4;
+  --color-success: #5b7a5e;
+  --color-success-soft: #e3ebdf;
+
+  /* 字體 */
+  --font-heading: 'Noto Serif TC', 'Songti TC', serif;
+  --font-body: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.625rem;
+  --line-height: 1.6;
+
+  /* 形狀 */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgb(59 50 41 / 6%), 0 4px 16px rgb(59 50 41 / 5%);
+  --shadow-overlay: 0 12px 40px rgb(59 50 41 / 18%);
+
+  /* 間距 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* 版面 */
+  --sidebar-width: 232px;
+  --tabbar-height: 64px;
+  --content-max-width: 960px;
+  --touch-target: 44px;
+}

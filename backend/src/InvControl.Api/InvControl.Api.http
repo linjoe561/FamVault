@@ -1,0 +1,28 @@
+@api = http://localhost:5080/api/v1
+
+### 健康檢查
+GET {{api}}/health
+
+### 是否需要初始設定
+GET {{api}}/auth/setup-status
+
+### 建立第一位管理者（只有在還沒有任何成員時可以呼叫）
+POST {{api}}/auth/setup
+Content-Type: application/json
+
+{ "userName": "admin", "displayName": "管理者", "password": "changeme123" }
+
+### 登入
+# @name login
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{ "userName": "admin", "password": "changeme123" }
+
+### 目前登入的成員
+GET {{api}}/auth/me
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### 成員列表（管理者）
+GET {{api}}/users
+Authorization: Bearer {{login.response.body.accessToken}}
