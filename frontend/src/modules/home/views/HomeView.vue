@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import AppIcon from '@/shared/components/AppIcon.vue'
 import { useAuthStore } from '@/modules/auth/store'
 
 const auth = useAuthStore()
@@ -11,23 +12,29 @@ const greeting = computed(() => {
   return '晚安'
 })
 
-const upcoming = [
-  { title: '快到期的東西', text: '依保存期限排好，先到期的先用。' },
-  { title: '家裡還有沒有', text: '出門前查一下，不再重複買。' },
-  { title: '掃條碼登錄', text: '買回家掃一下就記好了。' },
+// 第五階段會換成到期提醒、需要補貨等儀表板資訊
+const shortcuts = [
+  { to: { name: 'stock' }, icon: 'jar', title: '家裡還有沒有', text: '查數量、放哪裡、什麼時候到期' },
+  { to: { name: 'stock', query: { status: 'expiring' } }, icon: 'history', title: '快過期的東西', text: '已過期和 7 天內到期的，先到期的先用' },
+  { to: { name: 'purchase-new' }, icon: 'cart', title: '買東西回來了', text: '登錄一下，庫存自動增加' },
 ]
 </script>
 
 <template>
   <section class="hero">
     <h1 class="hero__title">{{ greeting }}，{{ auth.user?.displayName }}</h1>
-    <p class="hero__text">家裡的庫存功能正在準備中，下面是接下來會出現在這裡的內容。</p>
+    <p class="hero__text">今天要做什麼呢？</p>
   </section>
 
-  <ul class="upcoming">
-    <li v-for="item in upcoming" :key="item.title" class="upcoming__item card">
-      <h2 class="upcoming__title">{{ item.title }}</h2>
-      <p class="upcoming__text">{{ item.text }}</p>
+  <ul class="shortcuts">
+    <li v-for="item in shortcuts" :key="item.title">
+      <RouterLink :to="item.to" class="shortcut card">
+        <span class="shortcut__icon"><AppIcon :name="item.icon" /></span>
+        <span>
+          <span class="shortcut__title">{{ item.title }}</span>
+          <span class="shortcut__text">{{ item.text }}</span>
+        </span>
+      </RouterLink>
     </li>
   </ul>
 </template>
@@ -46,27 +53,47 @@ const upcoming = [
   color: var(--color-text-muted);
 }
 
-.upcoming {
+.shortcuts {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.upcoming__item {
+.shortcut {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: 100%;
   padding: var(--space-4) var(--space-5);
-  border-style: dashed;
-  box-shadow: none;
+  color: inherit;
+  text-decoration: none;
 }
 
-.upcoming__title {
-  font-size: var(--font-size-md);
-  margin-bottom: var(--space-1);
+.shortcut:hover {
+  border-color: var(--color-border-strong);
 }
 
-.upcoming__text {
+.shortcut__icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.shortcut__title {
+  display: block;
+  font-weight: 500;
+}
+
+.shortcut__text {
+  display: block;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }

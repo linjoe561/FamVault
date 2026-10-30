@@ -1,6 +1,7 @@
 using FamVault.SharedKernel.Errors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace FamVault.SharedKernel.Web;
@@ -18,6 +19,9 @@ internal sealed class AppExceptionHandler(
         var (status, title, detail) = exception switch
         {
             AppException app => (app.StatusCode, app.Title, app.Message),
+            // 兩位家人同時修改同一筆資料（例如同時用掉同一批牛奶）
+            DbUpdateConcurrencyException => (
+                StatusCodes.Status409Conflict, "資料衝突", "這筆資料剛被其他人修改過，請重新整理後再試一次"),
             _ => (StatusCodes.Status500InternalServerError, "伺服器發生錯誤", null as string),
         };
 

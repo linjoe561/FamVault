@@ -1,5 +1,6 @@
 using FamVault.Modules.Catalog.Application;
 using FamVault.Modules.Catalog.Infrastructure;
+using FamVault.SharedKernel.Contracts;
 using FamVault.SharedKernel.Modules;
 using FamVault.SharedKernel.Persistence;
 using FluentValidation;
@@ -21,6 +22,7 @@ public sealed class CatalogModule : IModule
         services.AddScoped<LocationService>();
         services.AddScoped<UnitService>();
         services.AddScoped<ItemService>();
+        services.AddScoped<ICatalogLookup, CatalogLookup>();
         services.AddValidatorsFromAssembly(typeof(CatalogModule).Assembly, includeInternalTypes: true);
     }
 }

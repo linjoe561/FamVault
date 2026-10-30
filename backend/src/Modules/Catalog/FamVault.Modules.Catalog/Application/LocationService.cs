@@ -1,11 +1,12 @@
 using FamVault.Modules.Catalog.Domain;
 using FamVault.Modules.Catalog.Infrastructure;
+using FamVault.SharedKernel.Contracts;
 using FamVault.SharedKernel.Errors;
 using Microsoft.EntityFrameworkCore;
 
 namespace FamVault.Modules.Catalog.Application;
 
-public sealed class LocationService(CatalogModuleDbContext db)
+public sealed class LocationService(CatalogModuleDbContext db, IEnumerable<ICatalogReferenceChecker> referenceCheckers)
 {
     public async Task<IReadOnlyList<LocationDto>> ListAsync(CancellationToken cancellationToken) =>
         await db.Locations
@@ -50,6 +51,14 @@ public sealed class LocationService(CatalogModuleDbContext db)
         if (itemCount > 0)
         {
             throw new ConflictException($"還有 {itemCount} 個品項預設放在「{location.Name}」，請先改成其他位置");
+        }
+
+        foreach (var checker in referenceCheckers)
+        {
+            if (await checker.GetLocationDeleteBlockerAsync(id, cancellationToken) is { } reason)
+            {
+                throw new ConflictException(reason);
+            }
         }
 
         db.Locations.Remove(location);

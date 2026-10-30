@@ -1,7 +1,8 @@
 <script setup>
 import { useId } from 'vue'
 
-// 使用原生 select：手機上會打開系統的選擇器，最好操作
+// 使用原生 select：手機上會打開系統的選擇器，最好操作。
+// 額外屬性會傳給 <select>；要控制寬度等版面時，請在外面包一層元素。
 defineOptions({ inheritAttrs: false })
 
 defineProps({

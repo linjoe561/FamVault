@@ -2,6 +2,7 @@ using System.Globalization;
 using FluentValidation;
 using FamVault.SharedKernel.Auth;
 using FamVault.SharedKernel.Persistence;
+using FamVault.SharedKernel.Time;
 using FamVault.SharedKernel.Web;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,6 +16,7 @@ public static class SharedKernelServiceCollectionExtensions
         ValidatorOptions.Global.LanguageManager.Culture = new CultureInfo("zh-TW");
 
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IAppClock, AppClock>();
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, HttpCurrentUser>();
         services.AddScoped<AuditableEntityInterceptor>();

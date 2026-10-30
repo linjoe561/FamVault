@@ -1,33 +1,17 @@
 using FamVault.Modules.Catalog.Domain;
 using FamVault.Modules.Catalog.Infrastructure;
+using FamVault.SharedKernel.Contracts;
 using FamVault.SharedKernel.Errors;
 using FamVault.SharedKernel.Web;
 using Microsoft.EntityFrameworkCore;
 
 namespace FamVault.Modules.Catalog.Application;
 
-public sealed class ItemService(CatalogModuleDbContext db)
+public sealed class ItemService(CatalogModuleDbContext db, IEnumerable<ICatalogReferenceChecker> referenceCheckers)
 {
     public async Task<PagedResult<ItemDto>> ListAsync(ItemQuery query, CancellationToken cancellationToken)
     {
-        var items = db.Items.AsNoTracking();
-
-        if (!query.IncludeArchived)
-        {
-            items = items.Where(i => !i.IsArchived);
-        }
-
-        if (!string.IsNullOrWhiteSpace(query.Search))
-        {
-            var search = query.Search.Trim();
-            items = items.Where(i => i.Name.Contains(search) || i.Barcodes.Any(b => b.Code == search));
-        }
-
-        if (query.CategoryId is { } categoryId)
-        {
-            // 選大分類時，也包含底下小分類的品項
-            items = items.Where(i => i.CategoryId == categoryId || i.Category!.ParentId == categoryId);
-        }
+        var items = ItemFilters.Apply(db.Items.AsNoTracking(), query.Search, query.CategoryId, query.IncludeArchived);
 
         if (query.LocationId is { } locationId)
         {
@@ -74,12 +58,18 @@ public sealed class ItemService(CatalogModuleDbContext db)
         return await GetAsync(id, cancellationToken);
     }
 
-    /// <summary>
-    /// 永久刪除。之後有庫存模組時，有庫存紀錄的品項只能停用、不能刪除。
-    /// </summary>
+    /// <summary>永久刪除。有庫存紀錄等其他模組資料時不能刪除，只能停用。</summary>
     public async Task DeleteAsync(int id, CancellationToken cancellationToken)
     {
         var item = await db.Items.FindAsync([id], cancellationToken) ?? throw new NotFoundException("找不到這個品項");
+        foreach (var checker in referenceCheckers)
+        {
+            if (await checker.GetItemDeleteBlockerAsync(id, cancellationToken) is { } reason)
+            {
+                throw new ConflictException(reason);
+            }
+        }
+
         db.Items.Remove(item);
         await db.SaveChangesAsync(cancellationToken);
     }

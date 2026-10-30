@@ -21,9 +21,12 @@ description: FamVault 家庭庫存系統的開發規範與操作手冊。在這�
 ## 架構原則（不可違反）
 
 1. **模組化單體**：每個功能是一個模組，後端 `backend/src/Modules/<名稱>/`，前端 `frontend/src/modules/<名稱>/`。
-2. **模組之間不直接參照**：後端模組只能參照 `FamVault.SharedKernel`。需要別的模組的資料時，在 `SharedKernel/Contracts/` 定義介面，由擁有資料的模組實作（範例：`IUserDirectory`）。
+2. **模組之間不直接參照**：後端模組只能參照 `FamVault.SharedKernel`。需要別的模組的資料時，在 `SharedKernel/Contracts/` 定義介面，由擁有資料的模組實作。現有合約：
+   - `IUserDirectory`（Identity 實作）：使用者顯示名稱
+   - `ICatalogLookup`（Catalog 實作）：品項資訊與位置名稱
+   - `ICatalogReferenceChecker`（Inventory 實作，Catalog 用 `IEnumerable<>` 注入）：刪除品項／位置前詢問其他模組是否還在使用。新模組若參照品項或位置，也要實作它。
 3. **每個模組有自己的 DbContext 與 schema**：用 `services.AddModuleDbContext<T>(configuration, schema)` 註冊。跨模組只存 Id，不建立跨 schema 外鍵。
-4. **schema 名稱避開 T-SQL 保留字**（例如 `identity`、`user`、`order`）。現有：`auth`（Identity）、`catalog`（Catalog）。
+4. **schema 名稱避開 T-SQL 保留字**（例如 `identity`、`user`、`order`）。現有：`auth`（Identity）、`catalog`（Catalog）、`inventory`（Inventory）。
 5. **預設所有 API 都要登入**（FallbackPolicy）。公開端點必須明確標 `[AllowAnonymous]`；管理功能標 `[Authorize(Roles = AppRoles.Admin)]`（`AppRoles` 在 SharedKernel，模組不要參照 Identity 的 `RoleNames`）。
 6. **UI 不寫死色碼、字體、圓角、間距**：一律用 `frontend/src/design/tokens.css` 的 CSS 變數。視覺定位是溫暖的家用質感，**避免 SaaS 風格的藍紫漸層**。正式視覺之後由 Claude Design 提供，屆時主要替換 tokens。
 7. **手機優先**：觸控目標至少 `var(--touch-target)`（44px），輸入框字級至少 16px，版面在 375px 寬度要能用。
@@ -65,15 +68,19 @@ DbContext 的 `OnModelCreating` 要呼叫 `builder.HasDefaultSchema(Schema)`。
 ## 後端慣例
 
 - **驗證**：寫 `AbstractValidator<TRequest>`，由全域 `ValidationActionFilter` 自動執行。訊息一律中文（`.WithMessage("…")`）。不要用 DataAnnotations。
-- **錯誤**：可預期的錯誤丟 `SharedKernel.Errors` 的例外：`NotFoundException`（404）、`ConflictException`（409）、`BusinessRuleException`（400）、`UnauthorizedException`（401）。`AppExceptionHandler` 會轉成 ProblemDetails。不要在 Controller 內自己組錯誤回應。
+- **錯誤**：可預期的錯誤丟 `SharedKernel.Errors` 的例外：`NotFoundException`（404）、`ConflictException`（409）、`BusinessRuleException`（400）、`ForbiddenException`（403，例如「只能刪自己登錄的」）、`UnauthorizedException`（401）。`AppExceptionHandler` 會轉成 ProblemDetails。不要在 Controller 內自己組錯誤回應。
 - **目前使用者**：注入 `ICurrentUser`（`UserId`、`DisplayName`、`IsInRole`）。
-- **時間**：注入 `TimeProvider`，不要直接用 `DateTime.Now`。稽核時間用 `DateTimeOffset`；保存期限這類日期用 `DateOnly`。
+- **時間**：注入 `IAppClock`（`Now`、`Today`），不要直接用 `DateTime.Now`。`Today` 以家裡時區（預設 Asia/Taipei）計算，判斷到期、購買日期一定要用它。稽核時間用 `DateTimeOffset`；保存期限這類日期用 `DateOnly`。
+- **列舉**：API 以 camelCase 字串傳遞（`JsonStringEnumConverter`），存資料庫時用 `HasConversion<string>()`。
+- **庫存數量**：一律透過 `StockBatch.Record()` 變更，它會同時新增異動紀錄；不要直接改 `RemainingQuantity`。
+- **併發**：可能被多人同時修改的資料加 `RowVersion`（`IsRowVersion()`），衝突會自動轉成 409。
 - **主鍵**：業務資料用 `int`（`AuditableEntity.Id`）；使用者是 `Guid`。新 Guid 用 `Guid.CreateVersion7()`。
 - **DTO** 用 `sealed record`。JSON 欄位自動轉 camelCase。
 - **清單查詢**：查詢條件寫成 `record XxxQuery`（`[FromQuery]` 綁定，也會被驗證器檢查），回傳 `SharedKernel.Web.PagedResult<T>`。範例：`ItemsController.List`。
 - **刪除前檢查使用中**：被其他資料參照時丟 `ConflictException`，訊息說明有幾筆在用、該怎麼處理（範例：`CategoryService.DeleteAsync`）。
 - **種子資料**：用 `HasData`，所有值（含 `CreatedAt`）必須是常數，否則每次都會產生新的 Migration（範例：`CatalogSeedData`）。
-- **完整模組範例**：`Modules/Catalog`（多個 Service、查詢分頁、種子資料、跨表檢查）。
+- **完整模組範例**：`Modules/Catalog`（多個 Service、查詢分頁、種子資料、跨表檢查）；`Modules/Inventory`（使用其他模組的合約、併發控制、異動紀錄）。
+- **單元測試**：服務測試用 EF Core InMemory；其他模組的合約用假實作（範例：`tests/FamVault.Tests/Inventory/InventoryTestContext.cs`）。測試的 DbContext 要加上 `AuditableEntityInterceptor`，否則 `CreatedBy` 不會被填入。
 
 ## Migration
 
@@ -83,6 +90,7 @@ dotnet ef migrations add <名稱> --project src/Modules/<模組>/FamVault.Module
 ```
 
 開發環境啟動 API 時會自動套用所有模組的 Migration（`Database:AutoMigrate=true`）。
+**新增 Migration 後一定要先 `dotnet build` 整個方案**，再用 `--no-build` 啟動 API；否則 API 載入舊組件，Migration 不會套用（錯誤訊息：無效的物件名稱）。
 用 sqlcmd 修改資料時要加 `-I`（QUOTED_IDENTIFIER），否則有篩選索引的資料表會失敗：
 `sqlcmd -S . -E -C -I -d FamVault -Q "..."`
 
@@ -112,10 +120,14 @@ export default {
 
 然後在 `frontend/src/app/modules.js` 匯入並加入 `modules` 陣列。導覽列會自動出現。
 
+- **導覽列最多 5 項**（首頁、庫存、購買、品項、我的）。管理功能不要加進導覽，入口放在「我的」頁面（`AccountView` 的管理連結區）。
+- 模組之間可以 import 對方的 `api.js` 與 `store.js`，不要 import 對方的 views 或 components。
+- 日期、數量、金額的顯示用 `shared/utils/format.js`（`formatQuantity`、`formatDate`、`describeExpiry`…）；保存期限標籤用 `shared/components/ExpiryBadge.vue`。
+
 - 路由 meta：`public`（不需登入）、`requiresAdmin`、`layout: 'blank'`（不顯示導覽）、`title`、`navGroup`（子頁面要亮起哪個導覽項目，填該項目的路由名稱）。
 - 導覽圖示在 `shared/components/AppIcon.vue` 的 `paths` 新增。
 - 錯誤處理：API 失敗時拋出 `ApiError`，有 `message`（整體提示）與 `fieldErrors`（`{ 欄位: 訊息 }`）。表單用 `FormAlert` 顯示 message，`TextField` 的 `error` 屬性顯示欄位錯誤。
-- 共用元件：`BaseButton`、`TextField`、`BaseSelect`（原生 select，`placeholder` 會加一個值為 null 的選項）、`AppDialog`（手機上變成底部面板）、`ConfirmDialog`（`onConfirm` 回傳 Promise，失敗訊息顯示在對話框內）、`PageHeader`、`FormAlert`、`AppIcon`。
+- 共用元件：`BaseButton`、`TextField`、`BaseSelect`（原生 select，`placeholder` 會加一個值為 null 的選項；`TextField` 與 `BaseSelect` 的 `class` 會套到內層 input／select，要控制寬度請在外面包一層 div）、`AppDialog`（手機上變成底部面板）、`ConfirmDialog`（`onConfirm` 回傳 Promise，失敗訊息顯示在對話框內）、`PageHeader`、`FormAlert`、`AppIcon`。
 - 很少變動的參考資料（例如分類、單位）放在模組 store，載入一次共用；修改後 `load({ force: true })`（範例：`modules/catalog/store.js`）。
 - 長表單用獨立頁面（例如 `ItemFormView`），短表單用 `AppDialog`。
 

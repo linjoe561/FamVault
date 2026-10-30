@@ -59,6 +59,19 @@ async function logout() {
     </div>
   </section>
 
+  <nav v-if="auth.isAdmin" class="card links" aria-label="管理">
+    <RouterLink :to="{ name: 'members' }" class="links__item">
+      <AppIcon name="users" :size="20" />
+      家庭成員
+      <AppIcon name="chevron" :size="18" class="links__chevron" />
+    </RouterLink>
+    <RouterLink :to="{ name: 'catalog-settings' }" class="links__item">
+      <AppIcon name="settings" :size="20" />
+      分類、位置與單位
+      <AppIcon name="chevron" :size="18" class="links__chevron" />
+    </RouterLink>
+  </nav>
+
   <section class="card panel">
     <h2 class="panel__title">變更密碼</h2>
     <form class="form" novalidate @submit.prevent="changePassword">
@@ -125,6 +138,31 @@ async function logout() {
 .profile__meta {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+}
+
+.links {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--space-4);
+}
+
+.links__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: 0 var(--space-4) 0 var(--space-5);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.links__item + .links__item {
+  border-top: 1px solid var(--color-border);
+}
+
+.links__chevron {
+  margin-left: auto;
+  color: var(--color-border-strong);
 }
 
 .panel {

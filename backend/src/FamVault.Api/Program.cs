@@ -1,5 +1,8 @@
 using FamVault.Modules.Catalog;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using FamVault.Modules.Identity;
+using FamVault.Modules.Inventory;
 using FamVault.SharedKernel;
 using FamVault.SharedKernel.Modules;
 using FamVault.SharedKernel.Persistence;
@@ -15,6 +18,7 @@ IModule[] modules =
 [
     new IdentityModule(),
     new CatalogModule(),
+    new InventoryModule(),
 ];
 
 builder.Services.AddSharedKernel();
@@ -28,7 +32,10 @@ var mvc = builder.Services.AddControllers(options =>
     // 必填檢查交給 FluentValidation，訊息才會是中文且格式一致。
     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
     options.Filters.Add<ValidationActionFilter>();
-});
+})
+// 列舉值以 camelCase 字串傳遞（例如 "consume"、"expired"），前端比較好讀
+.AddJsonOptions(options =>
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)));
 foreach (var module in modules)
 {
     mvc.AddApplicationPart(module.GetType().Assembly);

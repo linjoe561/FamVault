@@ -89,12 +89,14 @@ onMounted(() => {
       <input v-model="filters.search" type="search" placeholder="搜尋名稱或條碼" enterkeyhint="search" />
     </label>
     <div class="filters__row">
-      <BaseSelect v-model="filters.categoryId" label="分類" placeholder="全部分類" class="filters__category">
-        <template v-for="parent in catalog.categoryTree" :key="parent.id">
-          <option :value="parent.id">{{ parent.name }}</option>
-          <option v-for="child in parent.children" :key="child.id" :value="child.id">　└ {{ child.name }}</option>
-        </template>
-      </BaseSelect>
+      <div class="filters__category">
+        <BaseSelect v-model="filters.categoryId" label="分類" placeholder="全部分類">
+          <template v-for="parent in catalog.categoryTree" :key="parent.id">
+            <option :value="parent.id">{{ parent.name }}</option>
+            <option v-for="child in parent.children" :key="child.id" :value="child.id">　└ {{ child.name }}</option>
+          </template>
+        </BaseSelect>
+      </div>
       <label class="toggle">
         <input v-model="filters.includeArchived" type="checkbox" />
         <span>顯示已停用</span>

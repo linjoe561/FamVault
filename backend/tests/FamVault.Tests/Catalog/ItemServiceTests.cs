@@ -15,7 +15,7 @@ public class ItemServiceTests
     public async Task Create_normalizes_and_deduplicates_barcodes()
     {
         await using var db = CatalogTestDb.Create();
-        var service = new ItemService(db);
+        var service = new ItemService(db, []);
 
         var item = await service.CreateAsync(Milk(" 4710088abc ", "4710088ABC", "123"), CancellationToken.None);
 
@@ -28,7 +28,7 @@ public class ItemServiceTests
     public async Task Barcode_already_used_by_another_item_is_rejected()
     {
         await using var db = CatalogTestDb.Create();
-        var service = new ItemService(db);
+        var service = new ItemService(db, []);
         await service.CreateAsync(Milk("4710088"), CancellationToken.None);
 
         var other = Milk("4710088") with { Name = "豆漿" };
@@ -41,7 +41,7 @@ public class ItemServiceTests
     public async Task Duplicate_name_is_rejected()
     {
         await using var db = CatalogTestDb.Create();
-        var service = new ItemService(db);
+        var service = new ItemService(db, []);
         await service.CreateAsync(Milk(), CancellationToken.None);
 
         await Assert.ThrowsAsync<ConflictException>(() => service.CreateAsync(Milk(), CancellationToken.None));
@@ -51,7 +51,7 @@ public class ItemServiceTests
     public async Task Update_replaces_barcodes_and_keeps_existing_ones()
     {
         await using var db = CatalogTestDb.Create();
-        var service = new ItemService(db);
+        var service = new ItemService(db, []);
         var created = await service.CreateAsync(Milk("111", "222"), CancellationToken.None);
 
         var updated = await service.UpdateAsync(created.Id, Milk("222", "333"), CancellationToken.None);
@@ -67,7 +67,7 @@ public class ItemServiceTests
         await using var db = CatalogTestDb.Create();
         var categories = new CategoryService(db);
         var dairy = await categories.CreateAsync(new SaveCategoryRequest("乳製品", CategoryFood), CancellationToken.None);
-        var items = new ItemService(db);
+        var items = new ItemService(db, []);
         await items.CreateAsync(Milk() with { CategoryId = dairy.Id }, CancellationToken.None);
         await items.CreateAsync(Milk() with { Name = "舊牌子鮮奶", IsArchived = true }, CancellationToken.None);
 

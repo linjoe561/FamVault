@@ -60,7 +60,8 @@ public sealed class ValidationActionFilter(IServiceProvider services) : IAsyncAc
 
     private static void AddError(Dictionary<string, List<string>> errors, string propertyName, string message)
     {
-        var key = JsonNamingPolicy.CamelCase.ConvertName(propertyName);
+        // 巢狀欄位每一段都轉 camelCase：Lines[0].Quantity → lines[0].quantity
+        var key = string.Join('.', propertyName.Split('.').Select(JsonNamingPolicy.CamelCase.ConvertName));
         if (!errors.TryGetValue(key, out var messages))
         {
             errors[key] = messages = [];

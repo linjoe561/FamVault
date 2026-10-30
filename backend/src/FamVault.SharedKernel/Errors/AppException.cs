@@ -29,6 +29,12 @@ public sealed class BusinessRuleException(string message) : AppException(message
     public override string Title => "無法完成操作";
 }
 
+public sealed class ForbiddenException(string message) : AppException(message)
+{
+    public override int StatusCode => StatusCodes.Status403Forbidden;
+    public override string Title => "沒有權限";
+}
+
 public sealed class UnauthorizedException(string message) : AppException(message)
 {
     public override int StatusCode => StatusCodes.Status401Unauthorized;

@@ -22,7 +22,7 @@ public class LookupServiceTests
     public async Task Category_in_use_cannot_be_deleted()
     {
         await using var db = CatalogTestDb.Create();
-        await new ItemService(db).CreateAsync(
+        await new ItemService(db, []).CreateAsync(
             new SaveItemRequest("白米", 1, 10, null, null, null, null, null, false), CancellationToken.None);
 
         var error = await Assert.ThrowsAsync<ConflictException>(() =>
