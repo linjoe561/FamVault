@@ -32,5 +32,5 @@ router.beforeEach(async (to) => {
 })
 
 router.afterEach((to) => {
-  document.title = to.meta.title ? `${to.meta.title}｜家中庫存` : '家中庫存'
+  document.title = to.meta.title ? `${to.meta.title}｜FamVault` : 'FamVault'
 })

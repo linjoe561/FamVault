@@ -12,7 +12,7 @@ defineProps({
     <section class="auth__card card">
       <div class="auth__brand">
         <span class="auth__logo"><AppIcon name="leaf" :size="26" /></span>
-        <span class="auth__brand-name">家中庫存</span>
+        <span class="auth__brand-name">FamVault</span>
       </div>
       <h1 class="auth__title">{{ title }}</h1>
       <p v-if="subtitle" class="auth__subtitle">{{ subtitle }}</p>

@@ -14,7 +14,7 @@ const items = computed(() => navItems.filter((item) => !item.adminOnly || auth.i
     <aside class="sidebar">
       <div class="sidebar__brand">
         <span class="sidebar__logo"><AppIcon name="leaf" /></span>
-        家中庫存
+        FamVault
       </div>
       <nav aria-label="主選單">
         <RouterLink v-for="item in items" :key="item.label" :to="item.to" class="sidebar__link">

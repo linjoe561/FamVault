@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import { storage } from '@/shared/utils/storage'
 import { authApi } from './api'
 
-const REFRESH_TOKEN_KEY = 'invcontrol.refreshToken'
+const REFRESH_TOKEN_KEY = 'famvault.refreshToken'
 
 /**
  * 登入狀態。

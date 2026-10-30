@@ -4,7 +4,7 @@
     {
       "name": "api",
       "runtimeExecutable": "dotnet",
-      "runtimeArgs": ["run", "--project", "backend/src/InvControl.Api"],
+      "runtimeArgs": ["run", "--project", "backend/src/FamVault.Api"],
       "port": 5080
     },
     {

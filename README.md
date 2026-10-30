@@ -1,4 +1,4 @@
-# InvControl 家中庫存
+# FamVault
 
 管理家裡購買物品、庫存數量與保存期限的系統，家庭成員各自登入使用。
 
@@ -8,7 +8,7 @@
 ## 快速開始
 
 ```bash
-dotnet run --project backend/src/InvControl.Api
+dotnet run --project backend/src/FamVault.Api
 ```
 
 ```bash
@@ -22,4 +22,4 @@ npm --prefix frontend run dev
 
 - [開發說明手冊](docs/開發說明手冊.md)：環境、架構、API、資料庫、設定
 - [使用者說明手冊](docs/使用者說明手冊.md)：給家人看的操作說明
-- [開發 skill](.claude/skills/invcontrol-dev/SKILL.md)：給 Claude Code 的開發規範
+- [開發 skill](.claude/skills/famvault-dev/SKILL.md)：給 Claude Code 的開發規範

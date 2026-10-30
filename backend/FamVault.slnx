@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FamVault.Api/FamVault.Api.csproj" />
+    <Project Path="src/FamVault.SharedKernel/FamVault.SharedKernel.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/FamVault.Modules.Identity/FamVault.Modules.Identity.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FamVault.Tests/FamVault.Tests.csproj" />
+  </Folder>
+</Solution>
